@@ -1,0 +1,372 @@
+:root {
+  --color-bg-deep: #07101e;
+  --color-bg-navy: #0e1c2e;
+  --color-wood-dark: #2c1a0e;
+  --color-wood-mid: #5a3518;
+  --color-wood-light: #8b5523;
+  --color-gold-bright: #ffd700;
+  --color-gold-warm: #f5b041;
+  --color-gold-dark: #b78727;
+  --color-parchment: #fdf6e2;
+  --color-parchment-dim: #d5c8a9;
+  --color-sea-blue: #2980b9;
+  --color-sea-cyan: #38bdf8;
+  --color-danger: #e74c3c;
+  --color-success: #2ecc71;
+  
+  --font-pirate: 'Pirata One', 'Cinzel', cursive, serif;
+  --font-heading: 'Cinzel', Georgia, serif;
+  --font-body: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--color-bg-deep);
+  background-image: radial-gradient(circle at center, #132742 0%, #08101a 100%);
+  color: var(--color-parchment);
+  font-family: var(--font-body);
+  overflow: hidden;
+  height: 100vh;
+  width: 100vw;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#root {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Background Scene with vignette */
+.scene-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  max-width: 1024px;
+  max-height: 768px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  box-shadow: 0 0 50px rgba(0, 0, 0, 0.8), inset 0 0 100px rgba(0, 0, 0, 0.5);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+/* Wood & Brass 9-slice styled panel */
+.pirate-panel {
+  position: relative;
+  background-color: #121c29;
+  border-style: solid;
+  border-width: 32px 32px 36px 32px;
+  border-image-source: url('/assets/png/default/ui/menu/panel_menu.png');
+  border-image-slice: 36 32 40 32 fill;
+  border-image-repeat: stretch;
+  filter: drop-shadow(0 15px 35px rgba(0, 0, 0, 0.7));
+  color: var(--color-parchment);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  animation: panelPop 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes panelPop {
+  0% {
+    transform: scale(0.92);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Pirate Title Header Banner */
+.pirate-title-banner {
+  width: 340px;
+  height: 90px;
+  background-image: url('/assets/png/default/ui/menu/title_pirate_battle.png');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.6));
+  margin-bottom: 8px;
+}
+
+/* Primary Button (Golden Plank with brass rivets) */
+.pirate-btn-primary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 220px;
+  height: 56px;
+  background: url('/assets/png/default/ui/menu/button_primary_normal.png') no-repeat center center;
+  background-size: 100% 100%;
+  border: none;
+  color: #3b220d;
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 18px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  text-shadow: 0 1px 1px rgba(255, 255, 255, 0.4);
+  cursor: pointer;
+  outline: none;
+  transition: transform 0.08s ease, filter 0.15s ease;
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.4));
+}
+
+.pirate-btn-primary:hover:not(:disabled) {
+  background-image: url('/assets/png/default/ui/menu/button_primary_hover.png');
+  transform: translateY(-2px) scale(1.02);
+  filter: drop-shadow(0 6px 12px rgba(245, 176, 65, 0.4));
+}
+
+.pirate-btn-primary:active:not(:disabled) {
+  background-image: url('/assets/png/default/ui/menu/button_primary_pressed.png');
+  transform: translateY(1px) scale(0.98);
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.5));
+}
+
+.pirate-btn-primary:disabled {
+  background-image: url('/assets/png/default/ui/menu/button_primary_disabled.png');
+  color: #78716c;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+/* Secondary Button / Sub Tab (Smaller wooden banner) */
+.pirate-btn-secondary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 150px;
+  height: 42px;
+  background: url('/assets/png/default/ui/menu/button_secondary_normal.png') no-repeat center center;
+  background-size: 100% 100%;
+  border: none;
+  color: #f1dfbe;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+  cursor: pointer;
+  outline: none;
+  transition: transform 0.08s ease, filter 0.15s ease;
+  filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.4));
+}
+
+.pirate-btn-secondary:hover:not(:disabled) {
+  transform: translateY(-1px) scale(1.03);
+  filter: brightness(1.15) drop-shadow(0 4px 8px rgba(0, 0, 0, 0.5));
+  color: #ffffff;
+}
+
+.pirate-btn-secondary:active:not(:disabled),
+.pirate-btn-secondary.active {
+  background-image: url('/assets/png/default/ui/menu/button_secondary_pressed.png');
+  transform: translateY(1px) scale(0.98);
+  color: var(--color-gold-warm);
+}
+
+/* Round Wheel Button (Controls, plus/minus, pause, pagination) */
+.pirate-btn-round {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  background: url('/assets/png/default/ui/controls/button_round_normal.png') no-repeat center center;
+  background-size: 100% 100%;
+  border: none;
+  cursor: pointer;
+  outline: none;
+  transition: transform 0.08s ease, filter 0.15s ease;
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.5));
+  position: relative;
+}
+
+.pirate-btn-round:hover:not(:disabled) {
+  background-image: url('/assets/png/default/ui/controls/button_round_hover.png');
+  transform: scale(1.06);
+  filter: drop-shadow(0 6px 10px rgba(245, 176, 65, 0.35));
+}
+
+.pirate-btn-round:active:not(:disabled),
+.pirate-btn-round.active {
+  background-image: url('/assets/png/default/ui/controls/button_round_pressed.png');
+  transform: scale(0.95);
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.6));
+}
+
+.pirate-btn-round:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  filter: grayscale(0.8);
+}
+
+.pirate-btn-round img {
+  width: 26px;
+  height: 26px;
+  pointer-events: none;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5));
+}
+
+/* HUD Wood Counter Badge */
+.pirate-counter-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 110px;
+  height: 42px;
+  background: url('/assets/png/default/ui/hud/counter_panel.png') no-repeat center center;
+  background-size: 100% 100%;
+  padding: 0 14px;
+  color: var(--color-parchment);
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 16px;
+  text-shadow: 0 2px 3px rgba(0, 0, 0, 0.8);
+  filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.5));
+}
+
+.pirate-counter-badge img {
+  width: 22px;
+  height: 22px;
+}
+
+/* HUD Health Bar Frame */
+.pirate-health-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 180px;
+  height: 42px;
+  filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.5));
+}
+
+.pirate-health-frame {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: url('/assets/png/default/ui/hud/health_frame.png') no-repeat center center;
+  background-size: 100% 100%;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.pirate-health-track {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  top: 12px;
+  bottom: 12px;
+  background-color: #1a0f07;
+  border-radius: 4px;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.pirate-health-fill {
+  height: 100%;
+  background: url('/assets/png/default/ui/hud/health_fill_green.png') repeat-x left center;
+  background-size: auto 100%;
+  transition: width 0.25s ease, background-image 0.25s ease;
+}
+
+.pirate-health-text {
+  position: absolute;
+  width: 100%;
+  text-align: center;
+  font-family: var(--font-heading);
+  font-size: 12px;
+  font-weight: 800;
+  color: #fff;
+  text-shadow: 0 1px 3px #000, 0 0 4px #000;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.pirate-health-heart {
+  position: absolute;
+  left: -10px;
+  width: 32px;
+  height: 32px;
+  z-index: 4;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.6));
+}
+
+/* Nautical Table Styles */
+.pirate-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 6px;
+  font-family: var(--font-body);
+}
+
+.pirate-table th {
+  font-family: var(--font-heading);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--color-gold-warm);
+  padding: 6px 12px;
+  text-align: left;
+  border-bottom: 1px solid rgba(245, 176, 65, 0.2);
+}
+
+.pirate-table td {
+  padding: 10px 14px;
+  font-size: 14px;
+  background-color: rgba(14, 28, 46, 0.7);
+  color: var(--color-parchment);
+  border-top: 1px solid rgba(56, 189, 248, 0.1);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.4);
+}
+
+.pirate-table tr:first-child td {
+  border-top-left-radius: 6px;
+  border-bottom-left-radius: 6px;
+}
+
+.pirate-table tr td:last-child {
+  border-top-right-radius: 6px;
+  border-bottom-right-radius: 6px;
+}
+
+.pirate-table tr.highlight td {
+  background-color: rgba(245, 176, 65, 0.18);
+  color: var(--color-gold-bright);
+  font-weight: 700;
+  border-left: 3px solid var(--color-gold-warm);
+}
+
+.badge-rank-star {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--color-gold-bright);
+  font-weight: bold;
+}
