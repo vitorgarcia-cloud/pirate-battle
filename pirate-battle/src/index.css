@@ -53,10 +53,8 @@ body {
 /* Background Scene with vignette */
 .scene-container {
   position: relative;
-  width: 100%;
-  height: 100%;
-  max-width: 1024px;
-  max-height: 768px;
+  width: 100vw;
+  height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -64,9 +62,40 @@ body {
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-  box-shadow: 0 0 50px rgba(0, 0, 0, 0.8), inset 0 0 100px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+  padding: 12px;
+}
+
+/* Container responsivo da Arena de Jogo (aspect ratio 4:3 do canvas 1200x900) */
+.game-arena-wrapper {
+  position: relative;
+  width: min(1200px, 98vw, calc(96vh * 4 / 3));
+  height: min(900px, 96vh, calc(98vw * 3 / 4));
+  aspect-ratio: 4 / 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: auto;
   border-radius: 8px;
   overflow: hidden;
+  box-shadow: 0 0 50px rgba(0, 0, 0, 0.9), 0 0 0 2px rgba(56, 189, 248, 0.4);
+  background-color: #1a3b5c;
+}
+
+.game-canvas-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.game-canvas-container canvas {
+  width: 100% !important;
+  height: 100% !important;
+  display: block !important;
+  object-fit: contain !important;
 }
 
 /* Wood & Brass 9-slice styled panel */

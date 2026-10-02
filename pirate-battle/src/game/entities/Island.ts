@@ -1,5 +1,12 @@
-import { Container, Sprite, Texture } from 'pixi.js';
-import type { Entity } from './Entity';
+import { Container, Sprite, Texture, Graphics } from 'pixi.js';
+import type { Entity, Position } from './Entity';
+import { checkCircleCollision } from '../systems/CollisionSystem';
+
+export interface SolidBlock {
+  x: number;
+  y: number;
+  radius: number;
+}
 
 export class Island implements Entity {
   public id: string;
@@ -11,14 +18,28 @@ export class Island implements Entity {
   public height: number;
   public isDead: boolean = false;
   public view: Container;
+  public matrix: (string | null)[][];
+  public solidBlocks: SolidBlock[] = [];
+  public tileSize: number;
 
-  constructor(id: string, x: number, y: number, width: number = 128, height: number = 128) {
+  constructor(
+    id: string,
+    x: number,
+    y: number,
+    matrix: (string | null)[][],
+    tileSize: number = 72
+  ) {
     this.id = id;
     this.x = x;
     this.y = y;
-    this.width = width;
-    this.height = height;
-    this.radius = Math.min(width, height) / 2 - 4;
+    this.matrix = matrix;
+    this.tileSize = tileSize;
+
+    const rows = matrix.length;
+    const cols = matrix[0]?.length || 3;
+    this.width = cols * tileSize;
+    this.height = rows * tileSize;
+    this.radius = Math.max(this.width, this.height) / 2;
 
     this.view = new Container();
     this.view.x = x;
@@ -28,35 +49,53 @@ export class Island implements Entity {
   }
 
   private createTileMapIsland(): void {
-    const tileSize = 64;
-    const cols = Math.ceil(this.width / tileSize);
-    const rows = Math.ceil(this.height / tileSize);
-
-    const startX = -((cols * tileSize) / 2);
-    const startY = -((rows * tileSize) / 2);
+    const rows = this.matrix.length;
+    const cols = this.matrix[0]?.length || 3;
+    const startX = -(this.width / 2);
+    const startY = -(this.height / 2);
 
     for (let r = 0; r < rows; r++) {
       for (let c = 0; c < cols; c++) {
-        let textureAlias = 'islandCenter';
+        const textureAlias = this.matrix[r][c];
+        if (!textureAlias) continue; // Célula de água aberta no formato da ilha
 
-        if (r === 0) textureAlias = 'islandTop';
-        else if (r === rows - 1) textureAlias = 'islandBottom';
-        else if (c === 0) textureAlias = 'islandLeft';
-        else if (c === cols - 1) textureAlias = 'islandRight';
+        const localX = startX + c * this.tileSize;
+        const localY = startY + r * this.tileSize;
+        const blockCenterX = this.x + localX + this.tileSize / 2;
+        const blockCenterY = this.y + localY + this.tileSize / 2;
+
+        // Registra bloco de terra firme para colisão e geração de água rasa ao redor
+        this.solidBlocks.push({
+          x: blockCenterX,
+          y: blockCenterY,
+          radius: (this.tileSize / 2) * 0.85,
+        });
 
         try {
           const texture = Texture.from(textureAlias);
           const sprite = new Sprite(texture);
-          sprite.x = startX + c * tileSize;
-          sprite.y = startY + r * tileSize;
-          sprite.width = tileSize;
-          sprite.height = tileSize;
+          sprite.x = localX;
+          sprite.y = localY;
+          sprite.width = this.tileSize;
+          sprite.height = this.tileSize;
           this.view.addChild(sprite);
         } catch {
-          // Fallback se não encontrar
+          const g = new Graphics();
+          g.rect(localX, localY, this.tileSize, this.tileSize);
+          g.fill({ color: 0xd97706 });
+          this.view.addChild(g);
         }
       }
     }
+  }
+
+  public collidesWith(point: Position, radius: number): boolean {
+    for (const block of this.solidBlocks) {
+      if (checkCircleCollision(point, radius, block, block.radius)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public update(_deltaTime: number): void {}

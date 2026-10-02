@@ -3,11 +3,14 @@ import { Application } from 'pixi.js';
 import { GameEngine } from './core/GameEngine';
 import { AssetLoader } from './core/AssetLoader';
 
+import type { GameConfig } from './types/config';
+
 interface GameCanvasProps {
+  config?: GameConfig;
   onEngineReady?: (engine: GameEngine) => void;
 }
 
-export const GameCanvas: React.FC<GameCanvasProps> = ({ onEngineReady }) => {
+export const GameCanvas: React.FC<GameCanvasProps> = ({ config, onEngineReady }) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [loadingProgress, setLoadingProgress] = useState<number>(0);
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -40,8 +43,8 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({ onEngineReady }) => {
 
         const app = new Application();
         await app.init({
-          width: 800,
-          height: 600,
+          width: 1200,
+          height: 900,
           backgroundColor: 0x1a3b5c,
           resolution: window.devicePixelRatio || 1,
           autoDensity: true,
@@ -55,7 +58,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({ onEngineReady }) => {
         pixiApp = app;
         container.appendChild(app.canvas);
 
-        engine = new GameEngine(app);
+        engine = new GameEngine(app, config);
         await engine.init();
         engine.start();
 
@@ -86,7 +89,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({ onEngineReady }) => {
   }, []);
 
   return (
-    <div style={{ position: 'relative', width: '800px', height: '600px' }}>
+    <div className="game-canvas-container">
       {isLoading && (
         <div
           style={{
@@ -132,10 +135,11 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({ onEngineReady }) => {
       <div
         ref={containerRef}
         style={{
-          width: '800px',
-          height: '600px',
-          border: '2px solid #38bdf8',
-          borderRadius: '8px',
+          width: '100%',
+          height: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
           overflow: 'hidden',
           backgroundColor: '#1a3b5c',
         }}

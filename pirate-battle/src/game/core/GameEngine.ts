@@ -1,6 +1,5 @@
 import { Application, Container, Sprite, Texture } from 'pixi.js';
 import { EventEmitter } from './EventEmitter';
-import { AssetLoader } from './AssetLoader';
 import { InputManager } from './InputManager';
 import { EffectManager } from './EffectManager';
 import { DEFAULT_GAME_CONFIG, type GameConfig } from '../types/config';
@@ -9,6 +8,7 @@ import { ChaserEnemy, ShooterEnemy, type Enemy } from '../entities/Enemy';
 import { Projectile } from '../entities/Projectile';
 import { Island } from '../entities/Island';
 import { checkCircleCollision, clamp } from '../systems/CollisionSystem';
+import { soundManager } from './SoundManager';
 
 export class GameEngine {
   public app: Application;
@@ -30,6 +30,8 @@ export class GameEngine {
 
   // Spawn timer
   private spawnTimer: number = 0;
+  private playerWakeTimer: number = 0;
+  private enemyWakeTimer: number = 0;
 
   // Camadas de renderização
   public backgroundLayer: Container;
@@ -77,20 +79,48 @@ export class GameEngine {
   }
 
   public async init(): Promise<void> {
-    await AssetLoader.loadAll();
-    this.createBackground();
     this.createIslands();
+    this.createBackground();
     this.createPlayer();
   }
 
   private createBackground(): void {
     const { width, height } = this.app.screen;
+    const tileSize = 64;
+
     try {
-      const waterTexture = Texture.from('waterTile');
-      const tileSize = 64;
+      const deepWaterTexture = Texture.from('waterTile');
+      let shallowWaterTexture: Texture | null = null;
+      try {
+        shallowWaterTexture = Texture.from('shallowWaterTile');
+      } catch {
+        shallowWaterTexture = deepWaterTexture;
+      }
+
       for (let x = 0; x < width; x += tileSize) {
         for (let y = 0; y < height; y += tileSize) {
-          const tile = new Sprite(waterTexture);
+          const tileCenterX = x + tileSize / 2;
+          const tileCenterY = y + tileSize / 2;
+
+          // Detecta se o tile de água contorna qualquer bloco sólido de terra de qualquer ilha
+          let isNearIsland = false;
+          for (const island of this.islands) {
+            for (const block of island.solidBlocks) {
+              const dx = tileCenterX - block.x;
+              const dy = tileCenterY - block.y;
+              const distSq = dx * dx + dy * dy;
+              const shallowThreshold = block.radius + tileSize * 0.95;
+
+              if (distSq <= shallowThreshold * shallowThreshold) {
+                isNearIsland = true;
+                break;
+              }
+            }
+            if (isNearIsland) break;
+          }
+
+          const chosenTexture = isNearIsland && shallowWaterTexture ? shallowWaterTexture : deepWaterTexture;
+          const tile = new Sprite(chosenTexture);
           tile.x = x;
           tile.y = y;
           tile.width = tileSize;
@@ -104,18 +134,40 @@ export class GameEngine {
   }
 
   private createIslands(): void {
-    // Adiciona 2 ilhas bloqueadoras estratégicas na arena
-    const island1 = new Island('island_1', 220, 200, 128, 128);
-    const island2 = new Island('island_2', 580, 380, 128, 128);
+    // 1. ILHA 1: Formato 3x3 Clássico (Noroeste)
+    const matrix1: (string | null)[][] = [
+      ['island_tl', 'island_t', 'island_tr'],
+      ['island_l', 'island_c', 'island_r'],
+      ['island_bl', 'island_b', 'island_br'],
+    ];
+    const island1 = new Island('island_1', 280, 240, matrix1, 64);
 
-    this.islands.push(island1, island2);
+    // 2. ILHA 2: Formato em "L" (Nordeste)
+    const matrix2: (string | null)[][] = [
+      ['island_tl', 'island_tr', null],
+      ['island_l', 'island_r', null],
+      ['island_l', 'island_r', null],
+      ['island_bl', 'island_br', null],
+    ];
+    const island2 = new Island('island_2', 920, 260, matrix2, 64 + 21);
+
+    // 3. ILHA 3: Formato em Ferradura / Atol em "U" com baía central (Centro-Sul) - 3x3
+    const matrix3: (string | null)[][] = [
+      ['island_tl', 'island_t', 'island_tr'],
+      ['island_l', 'island_c', 'island_r'],
+      ['island_bl', 'island_b', 'island_br'],
+    ];
+    const island3 = new Island('island_3', 600, 520, matrix3, 64);
+
+    this.islands.push(island1, island2, island3);
     this.islandLayer.addChild(island1.view);
     this.islandLayer.addChild(island2.view);
+    this.islandLayer.addChild(island3.view);
   }
 
   private createPlayer(): void {
     const startX = this.app.screen.width / 2;
-    const startY = this.app.screen.height - 100;
+    const startY = this.app.screen.height - 120;
     this.player = new PlayerShip(startX, startY, this.config);
     this.entityLayer.addChild(this.player.view);
   }
@@ -130,6 +182,9 @@ export class GameEngine {
     document.addEventListener('visibilitychange', this.boundVisibilityChange);
     window.addEventListener('blur', this.boundWindowBlur);
 
+    soundManager.playBGM('oceanAmbience');
+    soundManager.play('gameStart');
+
     this.events.emit('game:started', { time: this.timeRemaining });
   }
 
@@ -137,12 +192,14 @@ export class GameEngine {
     if (!this.isRunning || this.isPaused) return;
     this.isPaused = true;
     this.input.reset();
+    soundManager.play('gamePause');
     this.events.emit('game:paused');
   }
 
   public resume(): void {
     if (!this.isRunning || !this.isPaused) return;
     this.isPaused = false;
+    soundManager.play('gameResume');
     this.events.emit('game:resumed');
   }
 
@@ -151,6 +208,8 @@ export class GameEngine {
     this.isRunning = false;
     this.input.stopListening();
     this.app.ticker.remove(this.boundTick);
+
+    soundManager.stopBGM();
 
     document.removeEventListener('visibilitychange', this.boundVisibilityChange);
     window.removeEventListener('blur', this.boundWindowBlur);
@@ -191,15 +250,28 @@ export class GameEngine {
 
     this.player.updateWithInput(dt, this.input.getState(), (proj) => this.addProjectile(proj));
 
+    // Efeito de esteira d'água ao navegar
+    const isPlayerMoving = this.input.getState().forward || Math.hypot(this.player.x - prevPlayerX, this.player.y - prevPlayerY) > 0.5;
+    if (isPlayerMoving && !this.player.isDead) {
+      this.playerWakeTimer += dt;
+      if (this.playerWakeTimer >= 0.08) {
+        this.playerWakeTimer = 0;
+        const wakeX = this.player.x - Math.cos(this.player.rotation) * (this.player.radius + 4);
+        const wakeY = this.player.y - Math.sin(this.player.rotation) * (this.player.radius + 4);
+        this.effects.createWaterWake(wakeX, wakeY, this.player.rotation, this.player.radius);
+      }
+    }
+
     // Restringe Player aos limites da arena
     this.player.x = clamp(this.player.x, this.player.radius, this.app.screen.width - this.player.radius);
     this.player.y = clamp(this.player.y, this.player.radius, this.app.screen.height - this.player.radius);
 
-    // Colisão do Player com Ilhas
+    // Colisão do Player com Ilhas (formato preciso da terra firme)
     for (const island of this.islands) {
-      if (checkCircleCollision(this.player, this.player.radius, island, island.radius)) {
+      if (island.collidesWith(this.player, this.player.radius)) {
         this.player.x = prevPlayerX;
         this.player.y = prevPlayerY;
+        soundManager.play('shipCollision', 0.4);
         break;
       }
     }
@@ -214,6 +286,8 @@ export class GameEngine {
 
     if (this.player.isDead) {
       this.effects.createExplosion(this.player.x, this.player.y);
+      soundManager.play('shipSinking');
+      soundManager.play('explosion');
       this.endGame('player_destroyed');
       return;
     }
@@ -225,6 +299,13 @@ export class GameEngine {
       this.spawnEnemy();
     }
 
+    // Efeito periódico de esteira d'água para inimigos em movimento
+    this.enemyWakeTimer += dt;
+    const shouldEmitEnemyWake = this.enemyWakeTimer >= 0.12;
+    if (shouldEmitEnemyWake) {
+      this.enemyWakeTimer = 0;
+    }
+
     // 3. Atualiza Inimigos
     for (let i = this.enemies.length - 1; i >= 0; i--) {
       const enemy = this.enemies[i];
@@ -233,28 +314,27 @@ export class GameEngine {
 
       enemy.updateAI(dt, this.player, this.islands, (proj) => this.addProjectile(proj));
 
-      // Limites da arena
+      // Emite esteira de água se o inimigo se moveu
+      if (shouldEmitEnemyWake && !enemy.isDead && Math.hypot(enemy.x - prevX, enemy.y - prevY) > 0.2) {
+        const wakeX = enemy.x - Math.cos(enemy.rotation) * (enemy.radius + 3);
+        const wakeY = enemy.y - Math.sin(enemy.rotation) * (enemy.radius + 3);
+        this.effects.createWaterWake(wakeX, wakeY, enemy.rotation, enemy.radius * 0.9);
+      }
+
+      // Limites da arena e sincronização de visão
       enemy.x = clamp(enemy.x, enemy.radius, this.app.screen.width - enemy.radius);
       enemy.y = clamp(enemy.y, enemy.radius, this.app.screen.height - enemy.radius);
-
-      // Colisão de inimigo com ilhas
-      for (const island of this.islands) {
-        if (checkCircleCollision(enemy, enemy.radius, island, island.radius)) {
-          enemy.x = prevX;
-          enemy.y = prevY;
-          break;
-        }
-      }
       enemy.view.x = enemy.x;
       enemy.view.y = enemy.y;
 
-      // Colisão de Chaser com Player (Impacto direto suicida)
-      if (enemy.type === 'chaser' && !enemy.isDead && !this.player.isDead) {
+      // Colisão de Inimigos (Chaser & Shooter) com Player (Impacto direto)
+      if (!enemy.isDead && !this.player.isDead) {
         if (checkCircleCollision(enemy, enemy.radius, this.player, this.player.radius)) {
           enemy.takeDamage(999); // Auto-destrói
-          this.player.takeDamage((enemy as ChaserEnemy).damage);
+          this.player.takeDamage(enemy.damage);
           this.effects.createExplosion(enemy.x, enemy.y);
-          // Auto-destruição NÃO gera ponto
+          soundManager.play('shipCollision');
+          soundManager.play('explosion');
         }
       }
 
@@ -279,9 +359,10 @@ export class GameEngine {
       // Colidiu com Ilhas?
       if (!p.isDead) {
         for (const island of this.islands) {
-          if (checkCircleCollision(p, p.radius, island, island.radius)) {
+          if (island.collidesWith(p, p.radius)) {
             p.isDead = true;
             this.effects.createExplosion(p.x, p.y);
+            soundManager.play('waterHit', 0.6);
             break;
           }
         }
@@ -294,9 +375,12 @@ export class GameEngine {
             p.isDead = true;
             enemy.takeDamage(p.damage);
             this.effects.createExplosion(p.x, p.y);
+            soundManager.play('woodHit', 0.7);
 
             if (enemy.isDead) {
               this.score += 1;
+              soundManager.play('explosion');
+              soundManager.play('scorePoint');
               this.events.emit('score:update', this.score);
             }
             break;
@@ -310,6 +394,8 @@ export class GameEngine {
           p.isDead = true;
           this.player.takeDamage(p.damage);
           this.effects.createExplosion(p.x, p.y);
+          soundManager.play('woodHit', 0.8);
+          soundManager.play('explosion', 0.5);
         }
       }
 

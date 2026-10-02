@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { LeaderboardTab } from './LeaderboardTab';
 import { MatchHistoryTab } from './MatchHistoryTab';
+import { soundManager } from '../game/core/SoundManager';
 
 interface MainMenuProps {
   onStartGame: () => void;
@@ -9,6 +10,11 @@ interface MainMenuProps {
 
 export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onOpenOptions }) => {
   const [activeView, setActiveView] = useState<'menu' | 'ranking' | 'history'>('menu');
+
+  const handleNav = (view: 'menu' | 'ranking' | 'history') => {
+    soundManager.play('uiClick');
+    setActiveView(view);
+  };
 
   if (activeView === 'ranking' || activeView === 'history') {
     return (
@@ -36,13 +42,13 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onOpenOptions }
 
           <div style={{ display: 'flex', justifyContent: 'center', gap: '12px' }}>
             <button
-              onClick={() => setActiveView('ranking')}
+              onClick={() => handleNav('ranking')}
               className={`pirate-btn-secondary ${activeView === 'ranking' ? 'active' : ''}`}
             >
               Ranking
             </button>
             <button
-              onClick={() => setActiveView('history')}
+              onClick={() => handleNav('history')}
               className={`pirate-btn-secondary ${activeView === 'history' ? 'active' : ''}`}
             >
               Match History
@@ -55,7 +61,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onOpenOptions }
         </div>
 
         <button
-          onClick={() => setActiveView('menu')}
+          onClick={() => handleNav('menu')}
           className="pirate-btn-primary"
           style={{ width: '200px', height: '48px', fontSize: '15px' }}
         >
@@ -96,11 +102,23 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onOpenOptions }
 
       {/* Primary Action Buttons */}
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '14px', margin: '14px 0' }}>
-        <button onClick={onStartGame} className="pirate-btn-primary">
+        <button
+          onClick={() => {
+            soundManager.play('uiClick');
+            onStartGame();
+          }}
+          className="pirate-btn-primary"
+        >
           Play
         </button>
 
-        <button onClick={onOpenOptions} className="pirate-btn-primary">
+        <button
+          onClick={() => {
+            soundManager.play('uiClick');
+            onOpenOptions();
+          }}
+          className="pirate-btn-primary"
+        >
           Options
         </button>
       </div>
@@ -154,14 +172,14 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onOpenOptions }
       {/* Bottom Tabs / Sub-Buttons */}
       <div style={{ display: 'flex', gap: '16px', justifyContent: 'center' }}>
         <button
-          onClick={() => setActiveView('ranking')}
+          onClick={() => handleNav('ranking')}
           className="pirate-btn-secondary"
         >
           Ranking
         </button>
 
         <button
-          onClick={() => setActiveView('history')}
+          onClick={() => handleNav('history')}
           className="pirate-btn-secondary"
         >
           Match History

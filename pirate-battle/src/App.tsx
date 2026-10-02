@@ -147,7 +147,7 @@ function App() {
 
       {/* 2. TELA DE COMBATE / ARENA */}
       {screen === 'playing' && (
-        <div style={{ position: 'relative', width: '800px', height: '600px' }}>
+        <div className="game-arena-wrapper">
           <GameHUD
             score={score}
             timeRemaining={timeRemaining}
@@ -157,7 +157,7 @@ function App() {
             onPauseToggle={handlePauseToggle}
           />
 
-          <GameCanvas onEngineReady={handleEngineReady} />
+          <GameCanvas config={gameConfig} onEngineReady={handleEngineReady} />
 
           {engine && <TouchControls input={engine.input} />}
 

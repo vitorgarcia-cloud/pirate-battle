@@ -58,7 +58,7 @@ export const LeaderboardTab: React.FC = () => {
           marginBottom: '14px',
         }}
       >
-        120 SECOND BATTLES · 3 SECOND SPAWN INTERVAL
+        PIRATE BATTLE LEADERBOARD · TOP CAPTAINS
       </div>
 
       {entries.length === 0 ? (

@@ -3,6 +3,12 @@ import type { Entity } from './Entity';
 
 export type ProjectileOwner = 'player' | 'enemy';
 
+let projectileCounter = 0;
+
+export function generateProjectileId(owner: ProjectileOwner): string {
+  return `bullet_${owner}_${Date.now()}_${++projectileCounter}`;
+}
+
 export class Projectile implements Entity {
   public id: string;
   public x: number;
@@ -19,7 +25,7 @@ export class Projectile implements Entity {
   public view: Container;
 
   constructor(
-    id: string,
+    id: string | null | undefined,
     x: number,
     y: number,
     angle: number,
@@ -28,7 +34,7 @@ export class Projectile implements Entity {
     lifetime: number,
     owner: ProjectileOwner
   ) {
-    this.id = id;
+    this.id = id || generateProjectileId(owner);
     this.x = x;
     this.y = y;
     this.rotation = angle;
